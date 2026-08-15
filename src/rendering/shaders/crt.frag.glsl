@@ -1,6 +1,5 @@
 // ═════════════════════════════════════════════════════════════════════════════
-// src/rendering/shaders/crt.frag.glsl — 1970s CRT Phosphor Cathode Ray Tube Filter
-// PixiJS v8 / WebGL 2 / GLSL 300 ES compatible fragment shader
+// src/rendering/shaders/crt.frag.glsl — Universal WebGL 1/2 CRT Phosphor Filter
 // ═════════════════════════════════════════════════════════════════════════════
 
 precision mediump float;
@@ -9,17 +8,14 @@ in vec2 vTextureCoord;
 out vec4 finalColor;
 
 uniform sampler2D uTexture;
-
-uniform CRTUniforms {
-    float uTime;                // Elapsed simulation time
-    float uCurvature;           // Barrel distortion power (default ~3.5)
-    float uScanlineIntensity;   // Scanline darkness (0.0 to 1.0)
-    float uSignalNoise;         // RF static noise amplitude (0.0 to 1.0)
-    float uPhosphorDecay;       // Phosphor persistence / tint weight
-    float uChromaticAberration; // RGB split offset (0.0 to 0.01)
-    float uVignette;            // Edge shading falloff
-    vec2  uResolution;          // Viewport width, height
-};
+uniform float uTime;
+uniform float uCurvature;
+uniform float uScanlineIntensity;
+uniform float uSignalNoise;
+uniform float uPhosphorDecay;
+uniform float uChromaticAberration;
+uniform float uVignette;
+uniform vec2  uResolution;
 
 // Barrel curvature mapping
 vec2 curveUV(vec2 uv, float curvature) {
@@ -67,7 +63,6 @@ void main() {
     color += vec3(noise);
 
     // 4. Amber/Green Phosphor Tone Enhancement
-    // Warm retro cathode tone: slightly boosts amber/green channel persistence
     vec3 phosphorTint = vec3(0.95, 1.02, 0.94);
     color *= mix(vec3(1.0), phosphorTint, uPhosphorDecay * 0.15);
 

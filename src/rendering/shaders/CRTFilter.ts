@@ -2,52 +2,22 @@
 // src/rendering/shaders/CRTFilter.ts — PixiJS v8 CRT Filter Wrapper
 // ═════════════════════════════════════════════════════════════════════════════
 
-import { Filter, GlProgram } from 'pixi.js';
+import { Filter, GlProgram, defaultFilterVert } from 'pixi.js';
 import { CRT } from '@typings/constants';
 import fragmentShader from './crt.frag.glsl';
 
-const defaultFilterVertex = `
-in vec2 aPosition;
-out vec2 vTextureCoord;
-
-uniform vec4 uInputSize;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-vec4 filterVertexPosition(void) {
-    vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-    position.x = (position.x / uOutputTexture.x) * 2.0 - 1.0;
-    position.y = (position.y / uOutputTexture.y) * 2.0 - 1.0;
-    return vec4(position, 0.0, 1.0);
-}
-
-vec2 filterTextureCoord(void) {
-    return aPosition * (uOutputFrame.zw * uInputSize.zw);
-}
-
-void main(void) {
-    gl_Position = filterVertexPosition();
-    vTextureCoord = filterTextureCoord();
-}
-`;
-
 export class CRTFilter extends Filter {
   constructor(width: number = 1920, height: number = 1080) {
-    let glProgram: GlProgram | undefined;
-    try {
-      glProgram = GlProgram.from({
-        vertex: defaultFilterVertex,
-        fragment: fragmentShader,
-        name: 'crt-filter-program',
-      });
-    } catch (e) {
-      console.warn('[CRTFilter] GlProgram compilation fallback:', e);
-    }
+    const glProgram = GlProgram.from({
+      vertex: defaultFilterVert,
+      fragment: fragmentShader,
+      name: 'crt-filter-program',
+    });
 
     super({
       glProgram,
       resources: {
-        CRTUniforms: {
+        crtUniforms: {
           uTime: { value: 0, type: 'f32' },
           uCurvature: { value: CRT.DEFAULT_CURVATURE, type: 'f32' },
           uScanlineIntensity: { value: CRT.DEFAULT_SCANLINE_INTENSITY, type: 'f32' },
@@ -63,7 +33,7 @@ export class CRTFilter extends Filter {
 
   update(dt: number): void {
     try {
-      const uniforms = this.resources?.CRTUniforms?.uniforms;
+      const uniforms = this.resources?.crtUniforms?.uniforms;
       if (uniforms) {
         uniforms.uTime += dt;
       }
@@ -74,7 +44,7 @@ export class CRTFilter extends Filter {
 
   setResolution(width: number, height: number): void {
     try {
-      const uniforms = this.resources?.CRTUniforms?.uniforms;
+      const uniforms = this.resources?.crtUniforms?.uniforms;
       if (uniforms) {
         uniforms.uResolution = [width, height];
       }
@@ -84,20 +54,20 @@ export class CRTFilter extends Filter {
   }
 
   setCurvature(val: number): void {
-    if (this.resources?.CRTUniforms?.uniforms) {
-      this.resources.CRTUniforms.uniforms.uCurvature = val;
+    if (this.resources?.crtUniforms?.uniforms) {
+      this.resources.crtUniforms.uniforms.uCurvature = val;
     }
   }
 
   setNoise(val: number): void {
-    if (this.resources?.CRTUniforms?.uniforms) {
-      this.resources.CRTUniforms.uniforms.uSignalNoise = val;
+    if (this.resources?.crtUniforms?.uniforms) {
+      this.resources.crtUniforms.uniforms.uSignalNoise = val;
     }
   }
 
   setChromaticAberration(val: number): void {
-    if (this.resources?.CRTUniforms?.uniforms) {
-      this.resources.CRTUniforms.uniforms.uChromaticAberration = val;
+    if (this.resources?.crtUniforms?.uniforms) {
+      this.resources.crtUniforms.uniforms.uChromaticAberration = val;
     }
   }
 }
