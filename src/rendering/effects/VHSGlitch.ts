@@ -14,6 +14,9 @@ export class VHSGlitch {
   private height: number = 1080;
 
   constructor() {
+    this.view.label = 'VHSGlitch';
+    this.view.eventMode = 'none';
+    this.glitchGfx.eventMode = 'none';
     this.view.addChild(this.glitchGfx);
   }
 
@@ -22,9 +25,6 @@ export class VHSGlitch {
     this.height = h;
   }
 
-  /**
-   * Trigger a burst of horizontal scanline sync tears.
-   */
   triggerGlitch(intensity: number = 0.5, duration: number = 0.25): void {
     this.intensity = intensity;
     this.duration = duration;
@@ -39,7 +39,6 @@ export class VHSGlitch {
     this.activeTime -= dt;
     const progress = this.activeTime / this.duration;
 
-    // Draw 3-8 random horizontal noise bands
     const bandCount = Math.floor(3 + Math.random() * 5 * this.intensity);
 
     for (let i = 0; i < bandCount; i++) {
@@ -47,7 +46,6 @@ export class VHSGlitch {
       const bandHeight = 2 + Math.random() * 8 * this.intensity;
       const alpha = (0.15 + Math.random() * 0.35) * progress * this.intensity;
 
-      // Inverted or bright noise bar
       const isBright = Math.random() > 0.4;
       const color = isBright ? 0xccffdd : 0x05080c;
 

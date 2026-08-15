@@ -35,14 +35,14 @@ export class StationScene implements Scene {
 
   // Components
   readonly hud = new HUD();
-  readonly dial = new FrequencyDial(34.5);
+  readonly dial = new FrequencyDial(32.0);
   readonly oscilloscope = new Oscilloscope(380, 210);
   readonly thermalGauge = new ThermalGauge();
   readonly signalMeter = new SignalMeter();
   readonly tapeDeck = new TapeDeck();
   readonly cardReader = new PunchCardReader();
   readonly teletype = new TeletypeTerminalView(420, 220);
-  readonly cardHand = new CardHand((card) => this.handleCardPlay(card));
+  readonly cardHand = new CardHand((card) => void this.handleCardPlay(card));
 
   // Logic engines
   private scrambler = new TextScrambler({
@@ -114,20 +114,19 @@ export class StationScene implements Scene {
 
   private async handleCardPlay(card: PunchCard): Promise<void> {
     const state = gameStateStore.getState();
-    if (state.phase !== 'DECRYPTING') return;
 
-    // 1. Feed card into reader visual
+    // 1. Feed card into reader visual & play motor feed sound
     await this.cardReader.feedCard(card);
 
     // 2. Apply card operation to working data blocks
     const nextBlocks = Decryptor.applyCardToAllBlocks(state.dataBlocks, card.operationType);
 
-    // 3. Validate Parity
+    // 3. Validate Parity Checksum
     const parityResult = state.currentEncounter
       ? ParityChecker.validate(nextBlocks, state.currentEncounter.targetParityPattern)
-      : { isMatch: false, matchRatio: 0 };
+      : { isMatch: false, matchRatio: 0, matchCount: 0, totalExpected: 8 };
 
-    // 4. Update Deck
+    // 4. Update Deck & Draw Replenishment
     const deckResult = CardDeck.playCard(
       { drawPile: state.drawPile, hand: state.hand, discardPile: state.discardPile },
       card.cardId
@@ -144,8 +143,15 @@ export class StationScene implements Scene {
 
     this.cardHand.setCards(replenished.hand);
 
-    // If parity is resolved, trigger teletype message reveal!
+    // 5. Provide feedback on teletype
+    if (!parityResult.isMatch) {
+      const matchPct = (parityResult.matchRatio * 100).toFixed(0);
+      this.teletype.setText(`OP: ${card.operationType} APPLIED // PARITY: ${matchPct}% MATCH (${parityResult.matchCount}/${parityResult.totalExpected})`);
+    }
+
+    // 6. If parity is resolved and carrier is locked (or unlocked), trigger teletype message reveal!
     if (parityResult.isMatch && state.currentEncounter) {
+      gameStateStore.setState({ phase: 'DECRYPTING' });
       this.scrambler.start({
         targetText: state.currentEncounter.targetDecodedText,
         durationMs: 3500,

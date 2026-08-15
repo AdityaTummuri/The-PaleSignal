@@ -2,7 +2,7 @@
 // src/rendering/components/FrequencyDial.ts — Heavy Rotary Radio Tuning Dial
 // ═════════════════════════════════════════════════════════════════════════════
 
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle, Circle } from 'pixi.js';
 import gsap from 'gsap';
 import { sfxBank } from '@core/audio/SFXBank';
 import { globalEventBus } from '@core/events/EventBus';
@@ -137,12 +137,13 @@ export class FrequencyDial {
     this.knobGfx.circle(0, 0, 14);
     this.knobGfx.fill({ color: 0x0e1411 });
     this.knobGfx.stroke({ color: 0x73d982, width: 1 });
+
+    this.knobGfx.eventMode = 'static';
+    this.knobGfx.cursor = 'grab';
+    this.knobGfx.hitArea = new Circle(0, 0, this.radius + 15);
   }
 
   private bindEvents(): void {
-    this.knobGfx.eventMode = 'static';
-    this.knobGfx.cursor = 'grab';
-
     this.knobGfx.on('pointerdown', (e) => {
       this.isDragging = true;
       this.view.cursor = 'grabbing';
@@ -200,9 +201,8 @@ export class FrequencyDial {
   }
 
   private updateKnobRotation(): void {
-    // Map frequency to angle
     const ratio = (this.currentFrequency - SIGNAL.MIN_FREQUENCY) / (SIGNAL.MAX_FREQUENCY - SIGNAL.MIN_FREQUENCY);
-    this.visualAngle = ratio * Math.PI * 8; // 4 full revolutions across band
+    this.visualAngle = ratio * Math.PI * 8;
     gsap.to(this.knobGfx, {
       rotation: this.visualAngle,
       duration: 0.1,

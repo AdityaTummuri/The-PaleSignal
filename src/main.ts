@@ -2,7 +2,7 @@
 // src/main.ts — Application Bootstrap, Engine Wireup & WebGL Context Lifecycle
 // ═════════════════════════════════════════════════════════════════════════════
 
-import { Application } from 'pixi.js';
+import { Application, Rectangle } from 'pixi.js';
 import { Engine } from '@core/engine/Engine';
 import { createGameFSM } from '@core/engine/GameFSM';
 import { globalEventBus } from '@core/events/EventBus';
@@ -13,7 +13,6 @@ import { SceneManager } from '@rendering/scenes/SceneManager';
 import { BootScene } from '@rendering/scenes/BootScene';
 import { StationScene } from '@rendering/scenes/StationScene';
 import { TransmissionScene } from '@rendering/scenes/TransmissionScene';
-import { StartOverlay } from '@rendering/ui/StartOverlay';
 import { CRTFilter } from '@rendering/shaders/CRTFilter';
 import { Parallax } from '@rendering/effects/Parallax';
 import { ScreenShake } from '@rendering/effects/ScreenShake';
@@ -44,6 +43,10 @@ async function bootstrap() {
   app.canvas.style.height = '100%';
   container.appendChild(app.canvas);
 
+  // Enable top-level stage interaction
+  app.stage.eventMode = 'static';
+  app.stage.hitArea = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
+
   // 2. Setup Systems & Managers
   const fsm = createGameFSM('BOOT');
   const sceneManager = new SceneManager();
@@ -72,6 +75,11 @@ async function bootstrap() {
   let stationScene: StationScene;
 
   const launchStation = async () => {
+    fsm.transition('STATION_ACTIVE');
+    signalSynth.init();
+    ambientSoundscape.init();
+    ambientSoundscape.updateForPhase('STATION_ACTIVE');
+
     stationScene = new StationScene(async () => {
       // Climax victory transmission scene
       const transScene = new TransmissionScene(async () => {
@@ -80,20 +88,17 @@ async function bootstrap() {
       await sceneManager.switchScene('TRANSMISSION', transScene, 0.5);
     });
 
-    await sceneManager.switchScene('STATION', stationScene, 0.5);
+    await sceneManager.switchScene('STATION', stationScene, 0.4);
   };
 
-  // 5. Start Overlay for User Audio Unlock Gesture
-  const startOverlay = new StartOverlay(async () => {
-    fsm.transition('STATION_ACTIVE');
-    signalSynth.init();
-    ambientSoundscape.init();
-    ambientSoundscape.updateForPhase('STATION_ACTIVE');
-
-    await launchStation();
-  });
-  startOverlay.view.visible = false;
-  app.stage.addChild(startOverlay.view);
+  // 5. Seamless First-Interaction Audio Unlock
+  const unlockAudioOnUserGesture = () => {
+    audioUnlockManager.unlock().catch(() => {});
+    window.removeEventListener('pointerdown', unlockAudioOnUserGesture);
+    window.removeEventListener('keydown', unlockAudioOnUserGesture);
+  };
+  window.addEventListener('pointerdown', unlockAudioOnUserGesture, { once: true });
+  window.addEventListener('keydown', unlockAudioOnUserGesture, { once: true });
 
   // 6. Initialize Engine with Fixed Simulation Loop
   const engine = new Engine(1 / 60, 0.25, {
@@ -141,24 +146,36 @@ async function bootstrap() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     app.renderer.resize(w, h);
+    app.stage.hitArea = new Rectangle(0, 0, w, h);
     if (crtFilter) {
       crtFilter.setResolution(w, h);
     }
     sceneManager.resize(w, h);
-    startOverlay.resize(w, h);
     vhsGlitch.resize(w, h);
   };
 
   window.addEventListener('resize', handleResize);
   handleResize();
 
-  // 10. Wire Audio Unlock Manager & Boot Flow
-  audioUnlockManager.bindUnlockEvents();
+  // 10. Boot sequence with instant-skip on click -> launch station
+  let bootFinished = false;
+  const finishBootAndLaunch = async () => {
+    if (bootFinished) return;
+    bootFinished = true;
+    window.removeEventListener('pointerdown', skipBootHandler);
+    window.removeEventListener('keydown', skipBootHandler);
+    await launchStation();
+  };
+
+  const skipBootHandler = () => {
+    finishBootAndLaunch();
+  };
+
+  window.addEventListener('pointerdown', skipBootHandler, { once: true });
+  window.addEventListener('keydown', skipBootHandler, { once: true });
 
   const bootScene = new BootScene(() => {
-    fsm.transition('AUDIO_LOCKED');
-    startOverlay.view.visible = true;
-    startOverlay.view.alpha = 1;
+    finishBootAndLaunch();
   });
 
   await sceneManager.switchScene('BOOT', bootScene, 0);

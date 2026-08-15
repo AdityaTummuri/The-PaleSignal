@@ -2,7 +2,7 @@
 // src/rendering/ui/CardHand.ts — Interactive Punch Card Hand Fan
 // ═════════════════════════════════════════════════════════════════════════════
 
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle, Rectangle } from 'pixi.js';
 import gsap from 'gsap';
 import { sfxBank } from '@core/audio/SFXBank';
 import { globalEventBus } from '@core/events/EventBus';
@@ -40,18 +40,20 @@ export class CardHand {
 
     const cardWidth = 140;
     const cardHeight = 190;
-    const spacing = Math.min(150, (this.width - 200) / total);
+    const spacing = Math.min(155, (this.width - 200) / total);
     const startX = this.width / 2 - ((total - 1) * spacing) / 2;
-    const baseY = this.height - 110;
+    const baseY = this.height - 100;
 
     this.currentCards.forEach((card, idx) => {
       const cardContainer = new Container();
       cardContainer.label = `Card_${card.cardId}`;
       cardContainer.eventMode = 'static';
       cardContainer.cursor = 'pointer';
+      // Explicit hit area covering full card body
+      cardContainer.hitArea = new Rectangle(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
 
-      // Slight fan rotation: -6 deg to +6 deg
-      const rot = total > 1 ? ((idx / (total - 1)) - 0.5) * 0.15 : 0;
+      // Fan rotation: -7 deg to +7 deg
+      const rot = total > 1 ? ((idx / (total - 1)) - 0.5) * 0.16 : 0;
       const posX = startX + idx * spacing;
       const posY = baseY + Math.abs(rot) * 20;
 
@@ -71,8 +73,8 @@ export class CardHand {
 
       // Card Operation Title
       const titleStyle = new TextStyle({
-        fontFamily: 'VT323, monospace',
-        fontSize: 24,
+        fontFamily: 'VT323, "Courier New", monospace',
+        fontSize: 26,
         fill: '#1a1f1b',
         letterSpacing: 1,
       });
@@ -82,17 +84,17 @@ export class CardHand {
         style: titleStyle,
       });
       title.anchor.set(0.5);
-      title.position.set(0, -cardHeight / 2 + 30);
+      title.position.set(0, -cardHeight / 2 + 32);
 
       // Power Cost Badge
       const costBadge = new Graphics();
-      costBadge.circle(0, 0, 12);
+      costBadge.circle(0, 0, 13);
       costBadge.fill({ color: 0x223528 });
       costBadge.position.set(cardWidth / 2 - 18, -cardHeight / 2 + 18);
 
       const costText = new Text({
         text: `${card.powerCost}P`,
-        style: new TextStyle({ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, fill: '#a8ffb2' }),
+        style: new TextStyle({ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, fill: '#a8ffb2' }),
       });
       costText.anchor.set(0.5);
       costText.position.set(cardWidth / 2 - 18, -cardHeight / 2 + 18);
@@ -114,14 +116,14 @@ export class CardHand {
       cardContainer.addChild(costBadge);
       cardContainer.addChild(costText);
 
-      // Hover / Click Interactions
+      // Hover / Click Interactions with spring animation
       cardContainer.on('pointerover', () => {
         gsap.to(cardContainer, {
-          y: baseY - 35,
+          y: baseY - 45,
           rotation: 0,
-          scale: 1.08,
+          scale: 1.12,
           duration: 0.2,
-          ease: 'power1.out',
+          ease: 'power2.out',
         });
       });
 
@@ -131,14 +133,26 @@ export class CardHand {
           rotation: rot,
           scale: 1.0,
           duration: 0.2,
-          ease: 'power1.in',
+          ease: 'power2.in',
         });
       });
 
-      cardContainer.on('pointerdown', () => {
+      cardContainer.on('pointerdown', (e) => {
+        e.stopPropagation();
         sfxBank.playSwitchClick(true);
-        globalEventBus.emit('card:played', { card, targetBlockIndex: 0 });
-        this.onCardSelected?.(card);
+
+        // Click launch animation: card zooms up toward reader
+        gsap.to(cardContainer, {
+          y: baseY - 120,
+          scale: 0.9,
+          alpha: 0,
+          duration: 0.25,
+          ease: 'power2.in',
+          onComplete: () => {
+            globalEventBus.emit('card:played', { card, targetBlockIndex: 0 });
+            this.onCardSelected?.(card);
+          },
+        });
       });
 
       this.view.addChild(cardContainer);
