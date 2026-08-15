@@ -1,0 +1,15 @@
+{
+  "encounterSeed": 88319,
+  "frequencyBand": 78.2,
+  "waveformComplexity": 2,
+  "signalNoiseRatio": 0.72,
+  "sourceStationName": "HAZEL POINT SUB-ARRAY // S-02",
+  "targetDecodedText": "INTERCEPT 409: BAROMETRIC PRESSURE DROPPING EXPONENTIALLY. UNIDENTIFIED CARRIER SPIKE EMBEDDED IN HARMONIC 3.",
+  "targetParityPattern": [0, 1, 1, 0, 1, 0, 1, 0],
+  "tapeDecayRate": 0.005,
+  "rawEncryptedBlocks": [63, 142, 221, 99, 178, 55, 234, 111],
+  "rewardCardPool": [
+    { "cardId": "rew_amp_1", "operationType": "AMPLIFY", "powerCost": 2, "isExhausted": false },
+    { "cardId": "rew_filter_1", "operationType": "FILTER", "powerCost": 1, "isExhausted": false }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "encounterSeed": 99402,
+  "frequencyBand": 114.8,
+  "waveformComplexity": 3,
+  "signalNoiseRatio": 0.60,
+  "sourceStationName": "DEEPWATER TRENCH ARRAY // S-03",
+  "targetDecodedText": "FINAL LOG: THE PALE SIGNAL ORIGINATES DEEP OFFSHORE. REPEATING IN AN ENDLESS HARMONIC CHORUS. RECEPTORS OVERHEATING. WE ARE NOT ALONE IN THE STORM.",
+  "targetParityPattern": [1, 1, 0, 1, 1, 0, 0, 1],
+  "tapeDecayRate": 0.007,
+  "rawEncryptedBlocks": [245, 118, 89, 203, 172, 61, 14, 189],
+  "rewardCardPool": [
+    { "cardId": "rew_shift_2", "operationType": "SHIFT", "powerCost": 1, "isExhausted": false },
+    { "cardId": "rew_invert_2", "operationType": "INVERT", "powerCost": 2, "isExhausted": false }
+  ]
+}

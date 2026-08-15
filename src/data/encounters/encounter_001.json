@@ -1,0 +1,15 @@
+{
+  "encounterSeed": 74921,
+  "frequencyBand": 34.5,
+  "waveformComplexity": 1,
+  "signalNoiseRatio": 0.85,
+  "sourceStationName": "BLACKWOOD REEF BEACON // S-01",
+  "targetDecodedText": "MAYDAY: STORM LEVEL 5 DETECTED AT LAT 48.2N. BUOY 14 DRIFTING. TRANSMITTING PALE BEACON SIGNAL TO ALL COASTAL RECEIVERS.",
+  "targetParityPattern": [1, 0, 1, 1, 0, 1, 0, 1],
+  "tapeDecayRate": 0.003,
+  "rawEncryptedBlocks": [182, 91, 214, 153, 77, 230, 115, 201],
+  "rewardCardPool": [
+    { "cardId": "rew_shift_1", "operationType": "SHIFT", "powerCost": 1, "isExhausted": false },
+    { "cardId": "rew_invert_1", "operationType": "INVERT", "powerCost": 2, "isExhausted": false }
+  ]
+}

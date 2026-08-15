@@ -1,0 +1,9 @@
+[
+  { "cardId": "c_shift_1", "operationType": "SHIFT", "powerCost": 1, "isExhausted": false },
+  { "cardId": "c_shift_2", "operationType": "SHIFT", "powerCost": 1, "isExhausted": false },
+  { "cardId": "c_invert_1", "operationType": "INVERT", "powerCost": 2, "isExhausted": false },
+  { "cardId": "c_invert_2", "operationType": "INVERT", "powerCost": 2, "isExhausted": false },
+  { "cardId": "c_amplify_1", "operationType": "AMPLIFY", "powerCost": 2, "isExhausted": false },
+  { "cardId": "c_filter_1", "operationType": "FILTER", "powerCost": 1, "isExhausted": false },
+  { "cardId": "c_filter_2", "operationType": "FILTER", "powerCost": 1, "isExhausted": false }
+]
