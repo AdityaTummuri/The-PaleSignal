@@ -6,7 +6,7 @@ import { Filter, GlProgram } from 'pixi.js';
 import { CRT } from '@typings/constants';
 import fragmentShader from './crt.frag.glsl';
 
-const vertexShader = `
+const defaultFilterVertex = `
 in vec2 aPosition;
 out vec2 vTextureCoord;
 
@@ -33,11 +33,16 @@ void main(void) {
 
 export class CRTFilter extends Filter {
   constructor(width: number = 1920, height: number = 1080) {
-    const glProgram = GlProgram.from({
-      vertex: vertexShader,
-      fragment: fragmentShader,
-      name: 'crt-filter-program',
-    });
+    let glProgram: GlProgram | undefined;
+    try {
+      glProgram = GlProgram.from({
+        vertex: defaultFilterVertex,
+        fragment: fragmentShader,
+        name: 'crt-filter-program',
+      });
+    } catch (e) {
+      console.warn('[CRTFilter] GlProgram compilation fallback:', e);
+    }
 
     super({
       glProgram,
@@ -57,24 +62,42 @@ export class CRTFilter extends Filter {
   }
 
   update(dt: number): void {
-    const uniforms = this.resources.CRTUniforms.uniforms;
-    uniforms.uTime += dt;
+    try {
+      const uniforms = this.resources?.CRTUniforms?.uniforms;
+      if (uniforms) {
+        uniforms.uTime += dt;
+      }
+    } catch {
+      // Safe fallback
+    }
   }
 
   setResolution(width: number, height: number): void {
-    const uniforms = this.resources.CRTUniforms.uniforms;
-    uniforms.uResolution = [width, height];
+    try {
+      const uniforms = this.resources?.CRTUniforms?.uniforms;
+      if (uniforms) {
+        uniforms.uResolution = [width, height];
+      }
+    } catch {
+      // Safe fallback
+    }
   }
 
   setCurvature(val: number): void {
-    this.resources.CRTUniforms.uniforms.uCurvature = val;
+    if (this.resources?.CRTUniforms?.uniforms) {
+      this.resources.CRTUniforms.uniforms.uCurvature = val;
+    }
   }
 
   setNoise(val: number): void {
-    this.resources.CRTUniforms.uniforms.uSignalNoise = val;
+    if (this.resources?.CRTUniforms?.uniforms) {
+      this.resources.CRTUniforms.uniforms.uSignalNoise = val;
+    }
   }
 
   setChromaticAberration(val: number): void {
-    this.resources.CRTUniforms.uniforms.uChromaticAberration = val;
+    if (this.resources?.CRTUniforms?.uniforms) {
+      this.resources.CRTUniforms.uniforms.uChromaticAberration = val;
+    }
   }
 }

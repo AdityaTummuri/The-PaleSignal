@@ -24,14 +24,14 @@ export class BootScene implements Scene {
 
   private setupUI(): void {
     const titleStyle = new TextStyle({
-      fontFamily: 'VT323, monospace',
+      fontFamily: 'VT323, "Courier New", monospace',
       fontSize: 48,
       fill: '#a8ffb2',
       letterSpacing: 4,
     });
 
     const statusStyle = new TextStyle({
-      fontFamily: 'IBM Plex Mono, monospace',
+      fontFamily: 'IBM Plex Mono, "Courier New", monospace',
       fontSize: 16,
       fill: '#5b8c63',
       letterSpacing: 2,
@@ -60,6 +60,8 @@ export class BootScene implements Scene {
     this.titleText.alpha = 0;
     this.statusText.alpha = 0;
 
+    const proxy = { progress: 0 };
+
     const tl = gsap.timeline({
       onComplete: () => {
         if (this.onBootComplete) {
@@ -68,13 +70,14 @@ export class BootScene implements Scene {
       },
     });
 
-    tl.to(this.titleText, { alpha: 1, duration: 0.8, ease: 'rough' })
+    tl.to(this.titleText, { alpha: 1, duration: 0.6, ease: 'power2.out' })
       .to(this.statusText, { alpha: 1, duration: 0.4 }, '-=0.2')
-      .to(this, {
+      .to(proxy, {
         progress: 1.0,
-        duration: 1.6,
+        duration: 1.4,
         ease: 'power1.inOut',
         onUpdate: () => {
+          this.progress = proxy.progress;
           if (this.progress > 0.35 && this.progress < 0.7) {
             this.statusText.text = 'PRIMING ANALOG DEMODULATOR & TAPE REELS...';
           } else if (this.progress >= 0.7) {
@@ -102,7 +105,6 @@ export class BootScene implements Scene {
   }
 
   exit(): void {
-    gsap.killTweensOf(this);
     gsap.killTweensOf(this.titleText);
     gsap.killTweensOf(this.statusText);
   }

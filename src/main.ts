@@ -21,6 +21,8 @@ import { VHSGlitch } from '@rendering/effects/VHSGlitch';
 import { FPSDebugger } from '@utils/debug';
 
 async function bootstrap() {
+  console.info('🌊 Initializing The Pale Signal...');
+
   const container = document.getElementById('game-container');
   if (!container) {
     throw new Error('Could not find #game-container in DOM.');
@@ -37,13 +39,12 @@ async function bootstrap() {
     powerPreference: 'high-performance',
   });
 
+  app.canvas.style.display = 'block';
+  app.canvas.style.width = '100%';
+  app.canvas.style.height = '100%';
   container.appendChild(app.canvas);
 
-  // 2. Setup CRT Post-Processing Filter
-  const crtFilter = new CRTFilter(window.innerWidth, window.innerHeight);
-  app.stage.filters = [crtFilter];
-
-  // 3. Setup Systems & Managers
+  // 2. Setup Systems & Managers
   const fsm = createGameFSM('BOOT');
   const sceneManager = new SceneManager();
   const parallax = new Parallax();
@@ -57,6 +58,15 @@ async function bootstrap() {
 
   screenShake.attach(sceneManager.stage);
   parallax.addLayer(sceneManager.stage, 0.04);
+
+  // 3. Setup CRT Post-Processing Filter (Protected)
+  let crtFilter: CRTFilter | null = null;
+  try {
+    crtFilter = new CRTFilter(window.innerWidth, window.innerHeight);
+    app.stage.filters = [crtFilter];
+  } catch (err) {
+    console.warn('[Bootstrap] CRT Shader filter fallback:', err);
+  }
 
   // 4. Scenes Definition
   let stationScene: StationScene;
@@ -94,7 +104,9 @@ async function bootstrap() {
       vhsGlitch.update(dt);
     },
     render: (alpha: number) => {
-      crtFilter.update(1 / 60);
+      if (crtFilter) {
+        crtFilter.update(1 / 60);
+      }
       fpsDebugger.update();
       sceneManager.render(alpha);
     },
@@ -129,7 +141,9 @@ async function bootstrap() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     app.renderer.resize(w, h);
-    crtFilter.setResolution(w, h);
+    if (crtFilter) {
+      crtFilter.setResolution(w, h);
+    }
     sceneManager.resize(w, h);
     startOverlay.resize(w, h);
     vhsGlitch.resize(w, h);
@@ -153,8 +167,11 @@ async function bootstrap() {
   console.info('🌊 The Pale Signal initialized successfully.');
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  bootstrap().catch((err) => {
-    console.error('Fatal initialization error:', err);
+// Immediate bootstrap invocation (safe against readyState race conditions)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    bootstrap().catch((err) => console.error('Fatal initialization error:', err));
   });
-});
+} else {
+  bootstrap().catch((err) => console.error('Fatal initialization error:', err));
+}
